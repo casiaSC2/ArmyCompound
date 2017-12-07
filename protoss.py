@@ -1,21 +1,24 @@
-from pysc2.agents import base_agent
-from pysc2.lib import actions
-from pysc2.lib import features
-from pysc2.env import run_loop
-from pysc2.env import sc2_env
-from pysc2.tests import utils
-from absl import flags
-from absl.testing import absltest
-from pysc2.maps.lib import Map
-import sys
-
 # GAFT
 from gaft import GAEngine
-from gaft.components import GAIndividual, GAPopulation
-from gaft.operators import RouletteWheelSelection, UniformCrossover, FlipBitMutation
-
+# Built-in best fitness analysis.
+from gaft.analysis.fitness_store import FitnessStore
+from gaft.components import GAIndividual
+from gaft.components import GAPopulation
+from gaft.operators import FlipBitMutation
+from gaft.operators import RouletteWheelSelection
+from gaft.operators import UniformCrossover
 # Analysis plugin base class.
 from gaft.plugin_interfaces.analysis import OnTheFlyAnalysis
+# Analysis plugin base class.
+from pysc2.agents import base_agent
+from pysc2.env import sc2_env
+from pysc2.lib import actions
+from pysc2.lib import features
+from pysc2.maps.lib import Map
+from absl import flags
+from run_loop import run
+import sys
+# Analysis plugin base class.
 
 # Functions
 _NOOP = actions.FUNCTIONS.no_op.id
@@ -44,32 +47,46 @@ _QUEUED = [1]
 # player state id
 _MINERALS_ID = 1
 
-combination_queue = []
-combination_queue.append((30, 0, 0))
 
 class SimpleAgent(base_agent.BaseAgent):
     build_queue = []
+    indv = None
     building_unit = None
     building_selected = False
     total_reward = 0
 
+    def __init__(self, indv):
+        super(SimpleAgent, self).__init__()
+        self.indv = indv
+
+    def set_up_build_queue(self):
+        zealot_num, stalker_num, dark_num = self.indv.variants
+        print('zealot num: {zealot}, stalker num:{stalker} dark num:{dark}'.format(
+            zealot = zealot_num,
+            stalker = stalker_num,
+            dark = dark_num
+        ))
+        for i in range(0, int(zealot_num)):
+            self.build_queue.append('zealot')
+        for i in range(0, int(stalker_num)):
+            self.build_queue.append('stalker')
+        for i in range(0, int(dark_num)):
+            self.build_queue.append('dark')
+
     def setup(self, obs_spec, action_spec):
         super().setup(obs_spec, action_spec)
+        self.build_queue.clear()
 
     def reset(self):
         super().reset()
-        self.total_reward = 0
+        self.build_queue.clear()
 
     def step(self, obs):
         super(SimpleAgent, self).step(obs)
         self.total_reward += obs.reward
-        print(self.total_reward)
 
         if obs.observation['player'][_MINERALS_ID] >= 2500:
-            for i in range(0, 10):
-                self.build_queue.append('zealot')
-                self.build_queue.append('stalker')
-                self.build_queue.append('dark')
+            self.set_up_build_queue()
         if len(self.build_queue) != 0 and self.building_unit is None:
             unit = self.build_queue.pop()
             if unit == 'zealot' or unit == 'stalker' or unit == 'dark':
@@ -95,24 +112,64 @@ class SimpleAgent(base_agent.BaseAgent):
         return actions.FunctionCall(_NOOP, [])
 
 
+
 FLAGS = flags.FLAGS
 FLAGS(sys.argv)
 
 
-class TestScripted(utils.TestCase):
-    def test(self):
-        train_map = Map()
-        train_map.directory = '/home/wangjian/StarCraftII/Maps'
-        train_map.filename = 'Train'
-        with sc2_env.SC2Env(
-                map_name=train_map,
-                visualize=True,
-                agent_race='T',
-                score_index=0,
-                game_steps_per_episode=1000) as env:
-            agent = SimpleAgent()
-            run_loop.run_loop([agent], env)
+def test(indv):
+    train_map = Map()
+    train_map.directory = '/home/wangjian/StarCraftII/Maps'
+    train_map.filename = 'Train'
+    with sc2_env.SC2Env(
+            map_name=train_map,
+            visualize=True,
+            agent_race='T',
+            score_index=0,
+            game_steps_per_episode=1000) as env:
+        agent = SimpleAgent(indv)
+        run([agent], env)
+        return agent.total_reward
+
+
+indv_template = GAIndividual(ranges=[(0, 10), (0, 10), (0, 10)], encoding='binary', eps=1.0)
+population = GAPopulation(indv_template=indv_template, size=10).init()
+# Use built-in operators here.
+selection = RouletteWheelSelection()
+crossover = UniformCrossover(pc=0.8, pe=0.5)
+mutation = FlipBitMutation(pm=0.1)
+engine = GAEngine(population=population, selection=selection,
+                  crossover=crossover, mutation=mutation,
+                  analysis=[FitnessStore])
+
+
+@engine.fitness_register
+def fitness(indv):
+    zealot_num, stalker_num, dark_num = indv.variants
+    fit = float(test(indv))
+    fit = fit - 100 * zealot_num - 200 * stalker_num - 250 * dark_num
+    print('fit :{fit}'.format(fit = fit))
+    return fit
+
+
+# Define on-the-fly analysis.
+@engine.analysis_register
+class ConsoleOutputAnalysis(OnTheFlyAnalysis):
+    interval = 1
+    master_only = True
+
+    def register_step(self, g, population, engine):
+        best_indv = population.best_indv(engine.fitness)
+        msg = 'Generation: {}, best fitness: {:.3f}'.format(g, engine.fitness(best_indv))
+        self.logger.info(msg)
+
+    def finalize(self, population, engine):
+        best_indv = population.best_indv(engine.fitness)
+        x = best_indv.variants
+        y = engine.fitness(best_indv)
+        msg = 'Optimal solution: ({}, {})'.format(x, y)
+        self.logger.info(msg)
 
 
 if __name__ == '__main__':
-    absltest.main()
+    engine.run(ng=4)
