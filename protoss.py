@@ -18,6 +18,7 @@ from pysc2.maps.lib import Map
 from absl import flags
 from run_loop import run
 import sys
+import random
 # Analysis plugin base class.
 
 # Functions
@@ -30,13 +31,16 @@ _ATTACK_MINIMAP = actions.FUNCTIONS.Attack_minimap.id
 _TRAIN_ZEALOT = actions.FUNCTIONS.Train_Zealot_quick.id
 _TRAIN_STALKER = actions.FUNCTIONS.Train_Stalker_quick.id
 _TRAIN_DARK = actions.FUNCTIONS.Train_DarkTemplar_quick.id
+_TRAIN_IMMORTAL = actions.FUNCTIONS.Train_Immortal_quick.id
+_TRAIN_COLOSSUS = actions.FUNCTIONS.Train_Colossus_quick.id
+
 # Features
 _PLAYER_RELATIVE = features.SCREEN_FEATURES.player_relative.index
 _UNIT_TYPE = features.SCREEN_FEATURES.unit_type.index
 
 # Unit IDs
 _PROTOSS_GATEWAY = 62
-
+_PROTOSS_ROBOTICSFACILITY = 71
 # Parameters
 _PLAYER_SELF = 1
 _SUPPLY_USED = 3
@@ -60,18 +64,23 @@ class SimpleAgent(base_agent.BaseAgent):
         self.indv = indv
 
     def set_up_build_queue(self):
-        zealot_num, stalker_num, dark_num = self.indv.variants
-        print('zealot num: {zealot}, stalker num:{stalker} dark num:{dark}'.format(
-            zealot = zealot_num,
-            stalker = stalker_num,
-            dark = dark_num
+        zealot_num, stalker_num, immortal_num, colossus_num = self.indv.variants
+        print('zealot num: {zealot}, stalker num:{stalker} Immortal num:{immortal} Colossus num:{colossus}'.format(
+            zealot=zealot_num,
+            stalker=stalker_num,
+            immortal=immortal_num,
+            colossus=colossus_num
         ))
         for i in range(0, int(zealot_num)):
             self.build_queue.append('zealot')
         for i in range(0, int(stalker_num)):
             self.build_queue.append('stalker')
-        for i in range(0, int(dark_num)):
-            self.build_queue.append('dark')
+        for i in range(0, int(immortal_num)):
+            self.build_queue.append('immortal')
+        for i in range(0, int(colossus_num)):
+            self.build_queue.append('colossus')
+        random.shuffle(self.build_queue)
+
 
     def setup(self, obs_spec, action_spec):
         super().setup(obs_spec, action_spec)
@@ -98,6 +107,15 @@ class SimpleAgent(base_agent.BaseAgent):
                     target = [int(unit_x.mean()), int(unit_y.mean())]
                     self.building_selected = True
                     return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
+            elif unit == 'immortal' or unit == 'colossus' or unit == 'observer':
+                self.building_unit = unit
+                unit_type = obs.observation["screen"][_UNIT_TYPE]
+                unit_y, unit_x = (unit_type == _PROTOSS_ROBOTICSFACILITY).nonzero()
+
+                if unit_y.any():
+                    target = [int(unit_x.mean()), int(unit_y.mean())]
+                    self.building_selected = True
+                    return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
 
         elif self.building_selected:
             building_unit = self.building_unit
@@ -109,8 +127,11 @@ class SimpleAgent(base_agent.BaseAgent):
                 return actions.FunctionCall(_TRAIN_STALKER, [_QUEUED])
             elif building_unit == 'dark' and _TRAIN_DARK in obs.observation['available_actions']:
                 return actions.FunctionCall(_TRAIN_DARK, [_QUEUED])
+            elif building_unit == 'immortal' and _TRAIN_IMMORTAL in obs.observation['available_actions']:
+                return actions.FunctionCall(_TRAIN_IMMORTAL, [_QUEUED])
+            elif building_unit == 'colossus' and _TRAIN_COLOSSUS in obs.observation['available_actions']:
+                return actions.FunctionCall(_TRAIN_COLOSSUS, [_QUEUED])
         return actions.FunctionCall(_NOOP, [])
-
 
 
 FLAGS = flags.FLAGS
@@ -132,7 +153,7 @@ def test(indv):
         return agent.total_reward
 
 
-indv_template = GAIndividual(ranges=[(0, 10), (0, 10), (0, 10)], encoding='binary', eps=1.0)
+indv_template = GAIndividual(ranges=[(0, 10), (0, 10), (0, 10), (0, 10)], encoding='binary', eps=1.0)
 population = GAPopulation(indv_template=indv_template, size=10).init()
 # Use built-in operators here.
 selection = RouletteWheelSelection()
@@ -145,10 +166,10 @@ engine = GAEngine(population=population, selection=selection,
 
 @engine.fitness_register
 def fitness(indv):
-    zealot_num, stalker_num, dark_num = indv.variants
+    zealot_num, stalker_num, immortal_num, colossal_num = indv.variants
     fit = float(test(indv))
-    fit = fit - 100 * zealot_num - 200 * stalker_num - 250 * dark_num
-    print('fit :{fit}'.format(fit = fit))
+    fit = fit - 100 * zealot_num - 200 * stalker_num - 350 * immortal_num - 500 * colossal_num
+    print('fit :{fit}'.format(fit=fit))
     return fit
 
 
