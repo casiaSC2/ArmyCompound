@@ -19,6 +19,7 @@ from absl import flags
 from run_loop import run
 import sys
 import random
+import protoss_units
 
 # Analysis plugin base class.
 
@@ -60,9 +61,6 @@ class SimpleAgent(base_agent.BaseAgent):
     building_unit = None
     building_selected = False
     total_reward = 0
-    warp_gate_rally_settled = False
-    robot_fac_rally_settled = False
-    star_gate_rally_settled = False
 
     def __init__(self, indv):
         super(SimpleAgent, self).__init__()
@@ -77,13 +75,13 @@ class SimpleAgent(base_agent.BaseAgent):
             colossus=colossus_num
         ))
         for i in range(0, int(zealot_num)):
-            self.build_queue.append('zealot')
+            self.build_queue.append(protoss_units.Zealot)
         for i in range(0, int(stalker_num)):
-            self.build_queue.append('stalker')
+            self.build_queue.append(protoss_units.Stalker)
         for i in range(0, int(immortal_num)):
-            self.build_queue.append('immortal')
+            self.build_queue.append(protoss_units.Immortal)
         for i in range(0, int(colossus_num)):
-            self.build_queue.append('colossus')
+            self.build_queue.append(protoss_units.Colossus)
         random.shuffle(self.build_queue)
 
     def setup(self, obs_spec, action_spec):
@@ -102,48 +100,21 @@ class SimpleAgent(base_agent.BaseAgent):
             self.set_up_build_queue()
         if len(self.build_queue) != 0 and self.building_unit is None:
             unit = self.build_queue.pop()
-            if unit == 'zealot' or unit == 'stalker' or unit == 'dark' or unit == 'adept' or unit == 'highTemplar' or unit == 'sentry':
-                self.building_unit = unit
-                unit_type = obs.observation["screen"][_UNIT_TYPE]
-                unit_y, unit_x = (unit_type == _PROTOSS_GATEWAY).nonzero()
+            self.building_unit = unit
+            unit_type = obs.observation["screen"][_UNIT_TYPE]
+            unit_y, unit_x = (unit_type == unit.build_id).nonzero()
 
-                if unit_y.any():
-                    target = [int(unit_x.mean()), int(unit_y.mean())]
-                    self.building_selected = True
-                    return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
-            elif unit == 'immortal' or unit == 'colossus' or unit == 'observer' or unit == 'disruptor' or unit == 'warpPrism':
-                self.building_unit = unit
-                unit_type = obs.observation["screen"][_UNIT_TYPE]
-                unit_y, unit_x = (unit_type == _PROTOSS_ROBOTICSFACILITY).nonzero()
+            if unit_y.any():
+                target = [int(unit_x.mean()), int(unit_y.mean())]
+                self.building_selected = True
+                return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
 
-                if unit_y.any():
-                    target = [int(unit_x.mean()), int(unit_y.mean())]
-                    self.building_selected = True
-                    return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
-            elif unit == 'immortal' or unit == 'colossus' or unit == 'observer' or unit == 'disruptor' or unit == 'warpPrism':
-                self.building_unit = unit
-                unit_type = obs.observation["screen"][_UNIT_TYPE]
-                unit_y, unit_x = (unit_type == _PROTOSS_STARGATE).nonzero()
-
-                if unit_y.any():
-                    target = [int(unit_x.mean()), int(unit_y.mean())]
-                    self.building_selected = True
-                    return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
 
         elif self.building_selected:
             building_unit = self.building_unit
             self.building_unit = None
             self.building_selected = False
-            if building_unit == 'zealot' and _TRAIN_ZEALOT in obs.observation['available_actions']:
-                return actions.FunctionCall(_TRAIN_ZEALOT, [_QUEUED])
-            elif building_unit == 'stalker' and _TRAIN_STALKER in obs.observation['available_actions']:
-                return actions.FunctionCall(_TRAIN_STALKER, [_QUEUED])
-            elif building_unit == 'dark' and _TRAIN_DARK in obs.observation['available_actions']:
-                return actions.FunctionCall(_TRAIN_DARK, [_QUEUED])
-            elif building_unit == 'immortal' and _TRAIN_IMMORTAL in obs.observation['available_actions']:
-                return actions.FunctionCall(_TRAIN_IMMORTAL, [_QUEUED])
-            elif building_unit == 'colossus' and _TRAIN_COLOSSUS in obs.observation['available_actions']:
-                return actions.FunctionCall(_TRAIN_COLOSSUS, [_QUEUED])
+            return actions.FunctionCall(building_unit.train_id, [_QUEUED])
         return actions.FunctionCall(_NOOP, [])
 
 
