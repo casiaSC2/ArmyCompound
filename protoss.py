@@ -19,6 +19,7 @@ from absl import flags
 from run_loop import run
 import sys
 import random
+
 # Analysis plugin base class.
 
 # Functions
@@ -41,6 +42,7 @@ _UNIT_TYPE = features.SCREEN_FEATURES.unit_type.index
 # Unit IDs
 _PROTOSS_GATEWAY = 62
 _PROTOSS_ROBOTICSFACILITY = 71
+_PROTOSS_STARGATE = 67
 # Parameters
 _PLAYER_SELF = 1
 _SUPPLY_USED = 3
@@ -58,6 +60,9 @@ class SimpleAgent(base_agent.BaseAgent):
     building_unit = None
     building_selected = False
     total_reward = 0
+    warp_gate_rally_settled = False
+    robot_fac_rally_settled = False
+    star_gate_rally_settled = False
 
     def __init__(self, indv):
         super(SimpleAgent, self).__init__()
@@ -81,7 +86,6 @@ class SimpleAgent(base_agent.BaseAgent):
             self.build_queue.append('colossus')
         random.shuffle(self.build_queue)
 
-
     def setup(self, obs_spec, action_spec):
         super().setup(obs_spec, action_spec)
         self.build_queue.clear()
@@ -98,7 +102,7 @@ class SimpleAgent(base_agent.BaseAgent):
             self.set_up_build_queue()
         if len(self.build_queue) != 0 and self.building_unit is None:
             unit = self.build_queue.pop()
-            if unit == 'zealot' or unit == 'stalker' or unit == 'dark':
+            if unit == 'zealot' or unit == 'stalker' or unit == 'dark' or unit == 'adept' or unit == 'highTemplar' or unit == 'sentry':
                 self.building_unit = unit
                 unit_type = obs.observation["screen"][_UNIT_TYPE]
                 unit_y, unit_x = (unit_type == _PROTOSS_GATEWAY).nonzero()
@@ -107,10 +111,19 @@ class SimpleAgent(base_agent.BaseAgent):
                     target = [int(unit_x.mean()), int(unit_y.mean())]
                     self.building_selected = True
                     return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
-            elif unit == 'immortal' or unit == 'colossus' or unit == 'observer':
+            elif unit == 'immortal' or unit == 'colossus' or unit == 'observer' or unit == 'disruptor' or unit == 'warpPrism':
                 self.building_unit = unit
                 unit_type = obs.observation["screen"][_UNIT_TYPE]
                 unit_y, unit_x = (unit_type == _PROTOSS_ROBOTICSFACILITY).nonzero()
+
+                if unit_y.any():
+                    target = [int(unit_x.mean()), int(unit_y.mean())]
+                    self.building_selected = True
+                    return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
+            elif unit == 'immortal' or unit == 'colossus' or unit == 'observer' or unit == 'disruptor' or unit == 'warpPrism':
+                self.building_unit = unit
+                unit_type = obs.observation["screen"][_UNIT_TYPE]
+                unit_y, unit_x = (unit_type == _PROTOSS_STARGATE).nonzero()
 
                 if unit_y.any():
                     target = [int(unit_x.mean()), int(unit_y.mean())]
@@ -144,10 +157,11 @@ def test(indv):
     train_map.filename = 'Train'
     with sc2_env.SC2Env(
             map_name=train_map,
-            visualize=True,
+            visualize=False,
             agent_race='T',
             score_index=0,
-            game_steps_per_episode=1000) as env:
+            game_steps_per_episode=1000,
+            difficulty=8) as env:
         agent = SimpleAgent(indv)
         run([agent], env)
         return agent.total_reward
@@ -193,4 +207,4 @@ class ConsoleOutputAnalysis(OnTheFlyAnalysis):
 
 
 if __name__ == '__main__':
-    engine.run(ng=4)
+    engine.run(ng=10)
