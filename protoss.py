@@ -67,21 +67,8 @@ class SimpleAgent(base_agent.BaseAgent):
         self.indv = indv
 
     def set_up_build_queue(self):
-        zealot_num, stalker_num, immortal_num, colossus_num = self.indv.variants
-        print('zealot num: {zealot}, stalker num:{stalker} Immortal num:{immortal} Colossus num:{colossus}'.format(
-            zealot=zealot_num,
-            stalker=stalker_num,
-            immortal=immortal_num,
-            colossus=colossus_num
-        ))
-        for i in range(0, int(zealot_num)):
-            self.build_queue.append(protoss_units.Zealot)
-        for i in range(0, int(stalker_num)):
-            self.build_queue.append(protoss_units.Stalker)
-        for i in range(0, int(immortal_num)):
-            self.build_queue.append(protoss_units.Immortal)
-        for i in range(0, int(colossus_num)):
-            self.build_queue.append(protoss_units.Colossus)
+        self.build_queue.clear()
+        self.build_queue = protoss_units.get_building_queue(self.indv.variants)
         random.shuffle(self.build_queue)
 
     def setup(self, obs_spec, action_spec):
@@ -96,7 +83,7 @@ class SimpleAgent(base_agent.BaseAgent):
         super(SimpleAgent, self).step(obs)
         self.total_reward += obs.reward
 
-        if obs.observation['player'][_MINERALS_ID] >= 2500:
+        if obs.observation['player'][_MINERALS_ID] >= 3500:
             self.set_up_build_queue()
         if len(self.build_queue) != 0 and self.building_unit is None:
             unit = self.build_queue.pop()
@@ -114,7 +101,8 @@ class SimpleAgent(base_agent.BaseAgent):
             building_unit = self.building_unit
             self.building_unit = None
             self.building_selected = False
-            return actions.FunctionCall(building_unit.train_id, [_QUEUED])
+            if building_unit.train_id in obs.observation['available_actions']:
+                return actions.FunctionCall(building_unit.train_id, [_QUEUED])
         return actions.FunctionCall(_NOOP, [])
 
 
@@ -138,8 +126,11 @@ def test(indv):
         return agent.total_reward
 
 
-indv_template = GAIndividual(ranges=[(0, 10), (0, 10), (0, 10), (0, 10)], encoding='binary', eps=1.0)
-population = GAPopulation(indv_template=indv_template, size=10).init()
+army_vector = []
+for i in range(0, 16):
+    army_vector.append((0, 5))
+indv_template = GAIndividual(ranges=army_vector, encoding='binary', eps=1.0)
+population = GAPopulation(indv_template=indv_template, size=40).init()
 # Use built-in operators here.
 selection = RouletteWheelSelection()
 crossover = UniformCrossover(pc=0.8, pe=0.5)
@@ -151,9 +142,11 @@ engine = GAEngine(population=population, selection=selection,
 
 @engine.fitness_register
 def fitness(indv):
-    zealot_num, stalker_num, immortal_num, colossal_num = indv.variants
+    building_queue = protoss_units.get_building_queue(indv.variants)
     fit = float(test(indv))
-    fit = fit - 100 * zealot_num - 200 * stalker_num - 350 * immortal_num - 500 * colossal_num
+    for unit in building_queue:
+        fit -= unit.minerals
+        fit -= 2 * unit.gas
     print('fit :{fit}'.format(fit=fit))
     return fit
 
@@ -178,4 +171,4 @@ class ConsoleOutputAnalysis(OnTheFlyAnalysis):
 
 
 if __name__ == '__main__':
-    engine.run(ng=10)
+    engine.run(ng=20)

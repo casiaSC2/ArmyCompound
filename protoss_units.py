@@ -2,11 +2,13 @@ from pysc2.lib import actions
 
 
 class Unit:
-    def __init__(self, name, build_id, train_id, unit_id):
+    def __init__(self, name, build_id, train_id, unit_id, minerals, gas):
         self.name = name
         self.build_id = build_id
         self.train_id = train_id
         self.unit_id = unit_id
+        self.minerals = minerals
+        self.gas = gas
 
 
 # Unit IDs
@@ -72,27 +74,77 @@ _TRAIN_CARRIER = actions.FUNCTIONS.Train_Carrier_quick.id
 _TRAIN_ORACLE = actions.FUNCTIONS.Train_Oracle_quick.id
 _TRAIN_TEMPEST = actions.FUNCTIONS.Train_Tempest_quick.id
 
+Zealot = Unit('zealot', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_ZEALOT, unit_id=PROTOSS_ZEALOT, minerals=100, gas=0)
+Stalker = Unit('stalker', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_STALKER, unit_id=PROTOSS_STALKER, minerals=125,
+               gas=50)
+Sentry = Unit('sentry', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_SENTRY, unit_id=PROTOSS_SENTRY, minerals=50, gas=100)
+HighTemplar = Unit('highTemplar', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_HIGHTEMPLAR, unit_id=PROTOSS_HIGHTEMPLAR,
+                   minerals=50, gas=150)
+DarkTemplar = Unit('darkTemplar', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_DARKTEMPLAR, unit_id=PROTOSS_DARKTEMPLAR,
+                   minerals=125, gas=125)
+Adept = Unit('adept', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_ADEPT, unit_id=PROTOSS_ADEPT, minerals=100, gas=25)
 
-Zealot = Unit('zealot', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_ZEALOT, unit_id=PROTOSS_ZEALOT)
-Stalker = Unit('stalker', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_STALKER, unit_id=PROTOSS_STALKER)
-Sentry = Unit('sentry', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_SENTRY, unit_id=PROTOSS_SENTRY)
-HighTemplar = Unit('highTemplar', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_HIGHTEMPLAR, unit_id=PROTOSS_HIGHTEMPLAR)
-Dark = Unit('darkTemplar', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_DARKTEMPLAR, unit_id=PROTOSS_DARKTEMPLAR)
-Adept = Unit('adept', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_ADEPT, unit_id=PROTOSS_ADEPT)
+Observer = Unit('observer', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_OBSERVER, unit_id=PROTOSS_OBSERVER,
+                minerals=25, gas=75)
+Immortal = Unit('immortal', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_IMMORTAL, unit_id=PROTOSS_IMMORTAL,
+                minerals=250, gas=100)
+WarpPrism = Unit('warpPrism', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_WARPPRISM, unit_id=PROTOSS_WARPPRISM,
+                 minerals=200, gas=0)
+Colossus = Unit('colossus', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_COLOSSUS, unit_id=PROTOSS_COLOSSUS,
+                minerals=300, gas=200)
+Disruptor = Unit('disruptor', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_DISRUPTOR, unit_id=PROTOSS_DISRUPTOR,
+                 minerals=150, gas=150)
 
-Observer = Unit('observer', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_OBSERVER, unit_id=PROTOSS_OBSERVER)
-Immortal = Unit('immortal', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_IMMORTAL, unit_id=PROTOSS_IMMORTAL)
-WarpPrism = Unit('warpPrism', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_WARPPRISM, unit_id=PROTOSS_WARPPRISM)
-Colossus = Unit('colossus', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_COLOSSUS, unit_id=PROTOSS_COLOSSUS)
-Disruptor = Unit('disruptor', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_DISRUPTOR, unit_id=PROTOSS_DISRUPTOR)
-
-Phoenix = Unit('phoenix', build_id=PROTOSS_STARGATE, train_id=_TRAIN_PHOENIX, unit_id=PROTOSS_PHOENIX)
-VoidRay = Unit('voidRay', build_id=PROTOSS_STARGATE, train_id=_TRAIN_VOIDRAY, unit_id=PROTOSS_VOIDRAY)
-Carrier = Unit('carrier', build_id=PROTOSS_STARGATE, train_id=_TRAIN_CARRIER, unit_id=PROTOSS_CARRIER)
-Oracle = Unit('carrier', build_id=PROTOSS_STARGATE, train_id=_TRAIN_ORACLE, unit_id=PROTOSS_ORACLE)
-Tempest = Unit('tempest', build_id=PROTOSS_STARGATE, train_id=_TRAIN_TEMPEST, unit_id=PROTOSS_TEMPEST)
-
+Phoenix = Unit('phoenix', build_id=PROTOSS_STARGATE, train_id=_TRAIN_PHOENIX, unit_id=PROTOSS_PHOENIX, minerals=150,
+               gas=100)
+VoidRay = Unit('voidRay', build_id=PROTOSS_STARGATE, train_id=_TRAIN_VOIDRAY, unit_id=PROTOSS_VOIDRAY, minerals=250,
+               gas=150)
+Carrier = Unit('carrier', build_id=PROTOSS_STARGATE, train_id=_TRAIN_CARRIER, unit_id=PROTOSS_CARRIER, minerals=350,
+               gas=250)
+Oracle = Unit('carrier', build_id=PROTOSS_STARGATE, train_id=_TRAIN_ORACLE, unit_id=PROTOSS_ORACLE, minerals=150,
+              gas=150)
+Tempest = Unit('tempest', build_id=PROTOSS_STARGATE, train_id=_TRAIN_TEMPEST, unit_id=PROTOSS_TEMPEST, minerals=300,
+               gas=200)
 
 
+def get_building_queue(unit_tuple):
+    build_queue = []
+    zealot_num, stalker_num, sentry_num, highTemplar_num, darkTemplar_num, adept_num, \
+    observer_num, warpPrism_num, immortal_num, colossus_num, disruptor_num, \
+    phoenix_num, voidRay_num, oracle_num, carrier_num, tempest_num = unit_tuple
+    print(unit_tuple)
+    for i in range(0, int(zealot_num)):
+        build_queue.append(Zealot)
+    for i in range(0, int(stalker_num)):
+        build_queue.append(Stalker)
+    for i in range(0, int(sentry_num)):
+        build_queue.append(Sentry)
+    for i in range(0, int(highTemplar_num)):
+        build_queue.append(HighTemplar)
+    for i in range(0, int(darkTemplar_num)):
+        build_queue.append(DarkTemplar)
+    for i in range(0, int(adept_num)):
+        build_queue.append(Adept)
 
+    for i in range(0, int(observer_num)):
+        build_queue.append(Observer)
+    for i in range(0, int(warpPrism_num)):
+        build_queue.append(WarpPrism)
+    for i in range(0, int(immortal_num)):
+        build_queue.append(Immortal)
+    for i in range(0, int(colossus_num)):
+        build_queue.append(Colossus)
+    for i in range(0, int(disruptor_num)):
+        build_queue.append(Disruptor)
 
+    for i in range(0, int(phoenix_num)):
+        build_queue.append(Phoenix)
+    for i in range(0, int(voidRay_num)):
+        build_queue.append(VoidRay)
+    for i in range(0, int(oracle_num)):
+        build_queue.append(Oracle)
+    for i in range(0, int(carrier_num)):
+        build_queue.append(Carrier)
+    for i in range(0, int(tempest_num)):
+        build_queue.append(Tempest)
+    return build_queue
