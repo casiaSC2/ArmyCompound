@@ -2,8 +2,8 @@
 from gaft import GAEngine
 # Built-in best fitness analysis.
 from gaft.analysis.fitness_store import FitnessStore
-from gaft.components import GAIndividual
-from gaft.components import GAPopulation
+from gaft.components import binary_individual
+from gaft.components import population
 from gaft.operators import FlipBitMutation
 from gaft.operators import RouletteWheelSelection
 from gaft.operators import UniformCrossover
@@ -129,8 +129,8 @@ def test(indv):
 army_vector = []
 for i in range(0, 16):
     army_vector.append((0, 5))
-indv_template = GAIndividual(ranges=army_vector, encoding='binary', eps=1.0)
-population = GAPopulation(indv_template=indv_template, size=40).init()
+indv_template = binary_individual.BinaryIndividual(ranges=army_vector, eps=1.0)
+population = population.Population(indv_template=indv_template, size=40).init()
 # Use built-in operators here.
 selection = RouletteWheelSelection()
 crossover = UniformCrossover(pc=0.8, pe=0.5)
