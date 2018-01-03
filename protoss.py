@@ -62,9 +62,9 @@ class SimpleAgent(base_agent.BaseAgent):
     building_selected = False
     total_reward = 0
 
-    def __init__(self, indv):
+    def __init__(self):
         super(SimpleAgent, self).__init__()
-        self.indv = indv
+        # self.indv = indv
 
     def set_up_build_queue(self):
         self.build_queue.clear()
@@ -78,6 +78,10 @@ class SimpleAgent(base_agent.BaseAgent):
     def reset(self):
         super().reset()
         self.build_queue.clear()
+        self.indv = global_indv
+        self.building_unit = None
+        self.building_selected = None
+        self.total_reward = 0
 
     def step(self, obs):
         super(SimpleAgent, self).step(obs)
@@ -110,27 +114,31 @@ FLAGS = flags.FLAGS
 FLAGS(sys.argv)
 
 
-def test(indv):
-    train_map = Map()
-    train_map.directory = '/home/wangjian/StarCraftII/Maps'
-    train_map.filename = 'Train'
-    with sc2_env.SC2Env(
+train_map = Map()
+train_map.directory = 'D:\\StarcraftAI\\Maps'
+train_map.filename = 'Train'
+env = sc2_env.SC2Env(
             map_name=train_map,
-            visualize=True,
-            agent_race='T',
+            visualize=False,
+            agent_race='P',
             score_index=0,
-            game_steps_per_episode=1000,
-            difficulty=8) as env:
-        agent = SimpleAgent(indv)
-        run([agent], env)
-        return agent.total_reward
+            game_steps_per_episode=500,
+            difficulty=8
+)
+global_indv = None
+agent = SimpleAgent()
+def test(indv):
+    global global_indv
+    global_indv = indv
+    run([agent], env)
+    return agent.total_reward
 
 
 army_vector = []
 for i in range(0, 16):
     army_vector.append((0, 5))
 indv_template = binary_individual.BinaryIndividual(ranges=army_vector, eps=1.0)
-population = population.Population(indv_template=indv_template, size=40).init()
+population = population.Population(indv_template=indv_template, size=60).init()
 # Use built-in operators here.
 selection = RouletteWheelSelection()
 crossover = UniformCrossover(pc=0.8, pe=0.5)
@@ -144,9 +152,12 @@ engine = GAEngine(population=population, selection=selection,
 def fitness(indv):
     building_queue = protoss_units.get_building_queue(indv.solution)
     fit = float(test(indv))
-    for unit in building_queue:
-        fit -= unit.minerals
-        fit -= 2 * unit.gas
+    for unit in building_queue[0:7]:
+        fit -= unit.time / 8
+    for unit in building_queue[7:12]:
+        fit -= unit.time / 2
+    for unit in building_queue[12:17]:
+        fit -= unit.time
     print('fit :{fit}'.format(fit=fit))
     return fit
 
@@ -164,7 +175,7 @@ class ConsoleOutputAnalysis(OnTheFlyAnalysis):
 
     def finalize(self, population, engine):
         best_indv = population.best_indv(engine.fitness)
-        x = best_indv.variants
+        x = best_indv.solution
         y = engine.fitness(best_indv)
         msg = 'Optimal solution: ({}, {})'.format(x, y)
         self.logger.info(msg)

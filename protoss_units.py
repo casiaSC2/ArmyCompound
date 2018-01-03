@@ -2,13 +2,14 @@ from pysc2.lib import actions
 
 
 class Unit:
-    def __init__(self, name, build_id, train_id, unit_id, minerals, gas):
+    def __init__(self, name, build_id, train_id, unit_id, minerals, gas, time):
         self.name = name
         self.build_id = build_id
         self.train_id = train_id
         self.unit_id = unit_id
         self.minerals = minerals
         self.gas = gas
+        self.time = time
 
 
 # Unit IDs
@@ -74,37 +75,37 @@ _TRAIN_CARRIER = actions.FUNCTIONS.Train_Carrier_quick.id
 _TRAIN_ORACLE = actions.FUNCTIONS.Train_Oracle_quick.id
 _TRAIN_TEMPEST = actions.FUNCTIONS.Train_Tempest_quick.id
 
-Zealot = Unit('zealot', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_ZEALOT, unit_id=PROTOSS_ZEALOT, minerals=100, gas=0)
+Zealot = Unit('zealot', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_ZEALOT, unit_id=PROTOSS_ZEALOT, minerals=100, gas=0, time=38)
 Stalker = Unit('stalker', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_STALKER, unit_id=PROTOSS_STALKER, minerals=125,
-               gas=50)
-Sentry = Unit('sentry', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_SENTRY, unit_id=PROTOSS_SENTRY, minerals=50, gas=100)
+               gas=50, time=42)
+Sentry = Unit('sentry', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_SENTRY, unit_id=PROTOSS_SENTRY, minerals=50, gas=100, time=37)
 HighTemplar = Unit('highTemplar', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_HIGHTEMPLAR, unit_id=PROTOSS_HIGHTEMPLAR,
-                   minerals=50, gas=150)
+                   minerals=50, gas=150, time=55)
 DarkTemplar = Unit('darkTemplar', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_DARKTEMPLAR, unit_id=PROTOSS_DARKTEMPLAR,
-                   minerals=125, gas=125)
-Adept = Unit('adept', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_ADEPT, unit_id=PROTOSS_ADEPT, minerals=100, gas=25)
+                   minerals=125, gas=125, time=55)
+Adept = Unit('adept', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_ADEPT, unit_id=PROTOSS_ADEPT, minerals=100, gas=25, time=38)
 
 Observer = Unit('observer', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_OBSERVER, unit_id=PROTOSS_OBSERVER,
-                minerals=25, gas=75)
+                minerals=25, gas=75, time=30)
 Immortal = Unit('immortal', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_IMMORTAL, unit_id=PROTOSS_IMMORTAL,
-                minerals=250, gas=100)
+                minerals=250, gas=100, time=55)
 WarpPrism = Unit('warpPrism', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_WARPPRISM, unit_id=PROTOSS_WARPPRISM,
-                 minerals=200, gas=0)
+                 minerals=200, gas=0, time=50)
 Colossus = Unit('colossus', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_COLOSSUS, unit_id=PROTOSS_COLOSSUS,
-                minerals=300, gas=200)
+                minerals=300, gas=200, time=75)
 Disruptor = Unit('disruptor', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_DISRUPTOR, unit_id=PROTOSS_DISRUPTOR,
-                 minerals=150, gas=150)
+                 minerals=150, gas=150, time=50)
 
 Phoenix = Unit('phoenix', build_id=PROTOSS_STARGATE, train_id=_TRAIN_PHOENIX, unit_id=PROTOSS_PHOENIX, minerals=150,
-               gas=100)
+               gas=100, time=35)
 VoidRay = Unit('voidRay', build_id=PROTOSS_STARGATE, train_id=_TRAIN_VOIDRAY, unit_id=PROTOSS_VOIDRAY, minerals=250,
-               gas=150)
+               gas=150, time=60)
 Carrier = Unit('carrier', build_id=PROTOSS_STARGATE, train_id=_TRAIN_CARRIER, unit_id=PROTOSS_CARRIER, minerals=350,
-               gas=250)
+               gas=250, time=120)
 Oracle = Unit('carrier', build_id=PROTOSS_STARGATE, train_id=_TRAIN_ORACLE, unit_id=PROTOSS_ORACLE, minerals=150,
-              gas=150)
+              gas=150, time=50)
 Tempest = Unit('tempest', build_id=PROTOSS_STARGATE, train_id=_TRAIN_TEMPEST, unit_id=PROTOSS_TEMPEST, minerals=300,
-               gas=200)
+               gas=200, time=60)
 
 
 def get_building_queue(unit_tuple):
