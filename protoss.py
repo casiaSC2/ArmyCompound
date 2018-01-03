@@ -68,7 +68,7 @@ class SimpleAgent(base_agent.BaseAgent):
 
     def set_up_build_queue(self):
         self.build_queue.clear()
-        self.build_queue = protoss_units.get_building_queue(self.indv.variants)
+        self.build_queue = protoss_units.get_building_queue(self.indv.solution)
         random.shuffle(self.build_queue)
 
     def setup(self, obs_spec, action_spec):
@@ -116,7 +116,7 @@ def test(indv):
     train_map.filename = 'Train'
     with sc2_env.SC2Env(
             map_name=train_map,
-            visualize=False,
+            visualize=True,
             agent_race='T',
             score_index=0,
             game_steps_per_episode=1000,
@@ -142,7 +142,7 @@ engine = GAEngine(population=population, selection=selection,
 
 @engine.fitness_register
 def fitness(indv):
-    building_queue = protoss_units.get_building_queue(indv.variants)
+    building_queue = protoss_units.get_building_queue(indv.solution)
     fit = float(test(indv))
     for unit in building_queue:
         fit -= unit.minerals
