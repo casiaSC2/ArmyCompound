@@ -68,7 +68,7 @@ class SimpleAgent(base_agent.BaseAgent):
 
     def set_up_build_queue(self):
         self.build_queue.clear()
-        self.build_queue = protoss_units.get_building_queue(self.indv.solution)
+        self.build_queue = protoss_units.get_building_queue(self.indv.solution, total_time=120)
         random.shuffle(self.build_queue)
 
     def setup(self, obs_spec, action_spec):
@@ -115,7 +115,7 @@ FLAGS(sys.argv)
 
 
 train_map = Map()
-train_map.directory = 'D:\\StarcraftAI\\Maps'
+train_map.directory = '/home/wangjian/StarCraftII/Maps'
 train_map.filename = 'Train'
 env = sc2_env.SC2Env(
             map_name=train_map,
@@ -123,7 +123,9 @@ env = sc2_env.SC2Env(
             agent_race='P',
             score_index=0,
             game_steps_per_episode=500,
-            difficulty=8
+            difficulty=8,
+            # save_replay_episodes=1,
+            # replay_dir='/home/wangjian/StarCraftII/Maps'
 )
 global_indv = None
 agent = SimpleAgent()
@@ -135,10 +137,12 @@ def test(indv):
 
 
 army_vector = []
-for i in range(0, 16):
-    army_vector.append((0, 5))
+for i in range(0, 11):
+    army_vector.append((0, 8))
+for i in range(11, 16):
+    army_vector.append((0, 2))
 indv_template = binary_individual.BinaryIndividual(ranges=army_vector, eps=1.0)
-population = population.Population(indv_template=indv_template, size=60).init()
+population = population.Population(indv_template=indv_template, size=40).init()
 # Use built-in operators here.
 selection = RouletteWheelSelection()
 crossover = UniformCrossover(pc=0.8, pe=0.5)
@@ -152,12 +156,15 @@ engine = GAEngine(population=population, selection=selection,
 def fitness(indv):
     building_queue = protoss_units.get_building_queue(indv.solution)
     fit = float(test(indv))
-    for unit in building_queue[0:7]:
-        fit -= unit.time / 8
-    for unit in building_queue[7:12]:
-        fit -= unit.time / 2
-    for unit in building_queue[12:17]:
-        fit -= unit.time
+    for unit in building_queue:
+        fit -= unit.minerals
+        fit -= unit.gas
+    # for unit in building_queue[0:7]:
+    #     fit -= unit.time / 8
+    # for unit in building_queue[7:12]:
+    #     fit -= unit.time / 2
+    # for unit in building_queue[12:17]:
+    #     fit -= unit.time
     print('fit :{fit}'.format(fit=fit))
     return fit
 
@@ -182,4 +189,4 @@ class ConsoleOutputAnalysis(OnTheFlyAnalysis):
 
 
 if __name__ == '__main__':
-    engine.run(ng=20)
+    engine.run(ng=15)

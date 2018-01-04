@@ -1,5 +1,5 @@
 from pysc2.lib import actions
-
+import random
 
 class Unit:
     def __init__(self, name, build_id, train_id, unit_id, minerals, gas, time):
@@ -107,45 +107,125 @@ Oracle = Unit('carrier', build_id=PROTOSS_STARGATE, train_id=_TRAIN_ORACLE, unit
 Tempest = Unit('tempest', build_id=PROTOSS_STARGATE, train_id=_TRAIN_TEMPEST, unit_id=PROTOSS_TEMPEST, minerals=300,
                gas=200, time=60)
 
-
-def get_building_queue(unit_tuple):
-    build_queue = []
+def get_raw_building_queue(unit_tuple):
+    gateway_building_queue = []
+    factory_building_queue = []
+    stargate_building_queue = []
     zealot_num, stalker_num, sentry_num, highTemplar_num, darkTemplar_num, adept_num, \
     observer_num, warpPrism_num, immortal_num, colossus_num, disruptor_num, \
     phoenix_num, voidRay_num, oracle_num, carrier_num, tempest_num = unit_tuple
     print(unit_tuple)
     for i in range(0, int(zealot_num)):
-        build_queue.append(Zealot)
+        gateway_building_queue.append(Zealot)
     for i in range(0, int(stalker_num)):
-        build_queue.append(Stalker)
+        gateway_building_queue.append(Stalker)
     for i in range(0, int(sentry_num)):
-        build_queue.append(Sentry)
+        gateway_building_queue.append(Sentry)
     for i in range(0, int(highTemplar_num)):
-        build_queue.append(HighTemplar)
+        gateway_building_queue.append(HighTemplar)
     for i in range(0, int(darkTemplar_num)):
-        build_queue.append(DarkTemplar)
+        gateway_building_queue.append(DarkTemplar)
     for i in range(0, int(adept_num)):
-        build_queue.append(Adept)
+        gateway_building_queue.append(Adept)
+
 
     for i in range(0, int(observer_num)):
-        build_queue.append(Observer)
+        factory_building_queue.append(Observer)
     for i in range(0, int(warpPrism_num)):
-        build_queue.append(WarpPrism)
+        factory_building_queue.append(WarpPrism)
     for i in range(0, int(immortal_num)):
-        build_queue.append(Immortal)
+        factory_building_queue.append(Immortal)
     for i in range(0, int(colossus_num)):
-        build_queue.append(Colossus)
+        factory_building_queue.append(Colossus)
     for i in range(0, int(disruptor_num)):
-        build_queue.append(Disruptor)
+        factory_building_queue.append(Disruptor)
 
     for i in range(0, int(phoenix_num)):
-        build_queue.append(Phoenix)
+        stargate_building_queue.append(Phoenix)
     for i in range(0, int(voidRay_num)):
-        build_queue.append(VoidRay)
+        stargate_building_queue.append(VoidRay)
     for i in range(0, int(oracle_num)):
-        build_queue.append(Oracle)
+        stargate_building_queue.append(Oracle)
     for i in range(0, int(carrier_num)):
-        build_queue.append(Carrier)
+        stargate_building_queue.append(Carrier)
     for i in range(0, int(tempest_num)):
-        build_queue.append(Tempest)
-    return build_queue
+        stargate_building_queue.append(Tempest)
+
+    return gateway_building_queue + factory_building_queue + stargate_building_queue
+
+
+def get_building_queue(unit_tuple, total_time = 900, gateway_count = 8, factory_count = 2, stargate_count = 1):
+    gateway_building_queue = []
+    factory_building_queue = []
+    stargate_building_queue = []
+    zealot_num, stalker_num, sentry_num, highTemplar_num, darkTemplar_num, adept_num, \
+    observer_num, warpPrism_num, immortal_num, colossus_num, disruptor_num, \
+    phoenix_num, voidRay_num, oracle_num, carrier_num, tempest_num = unit_tuple
+    print(unit_tuple)
+    for i in range(0, int(zealot_num)):
+        gateway_building_queue.append(Zealot)
+    for i in range(0, int(stalker_num)):
+        gateway_building_queue.append(Stalker)
+    for i in range(0, int(sentry_num)):
+        gateway_building_queue.append(Sentry)
+    for i in range(0, int(highTemplar_num)):
+        gateway_building_queue.append(HighTemplar)
+    for i in range(0, int(darkTemplar_num)):
+        gateway_building_queue.append(DarkTemplar)
+    for i in range(0, int(adept_num)):
+        gateway_building_queue.append(Adept)
+    random.shuffle(gateway_building_queue)
+    gateway_time = 0
+    gateway_queue = []
+    for i in gateway_building_queue:
+        building_time = i.time / gateway_count
+        if gateway_time + building_time > total_time:
+            break
+        else:
+            gateway_time += building_time
+            gateway_queue.append(i)
+
+    for i in range(0, int(observer_num)):
+        factory_building_queue.append(Observer)
+    for i in range(0, int(warpPrism_num)):
+        factory_building_queue.append(WarpPrism)
+    for i in range(0, int(immortal_num)):
+        factory_building_queue.append(Immortal)
+    for i in range(0, int(colossus_num)):
+        factory_building_queue.append(Colossus)
+    for i in range(0, int(disruptor_num)):
+        factory_building_queue.append(Disruptor)
+    random.shuffle(factory_building_queue)
+    factory_time = 0
+    factory_queue = []
+    for i in factory_building_queue:
+        building_time = i.time / factory_count
+        if factory_time + building_time > total_time:
+            break
+        else:
+            factory_time += building_time
+            factory_queue.append(i)
+
+
+    for i in range(0, int(phoenix_num)):
+        stargate_building_queue.append(Phoenix)
+    for i in range(0, int(voidRay_num)):
+        stargate_building_queue.append(VoidRay)
+    for i in range(0, int(oracle_num)):
+        stargate_building_queue.append(Oracle)
+    for i in range(0, int(carrier_num)):
+        stargate_building_queue.append(Carrier)
+    for i in range(0, int(tempest_num)):
+        stargate_building_queue.append(Tempest)
+
+    random.shuffle(stargate_building_queue)
+    stargate_time = 0
+    stargate_queue = []
+    for i in stargate_building_queue:
+        building_time = i.time / stargate_count
+        if stargate_time + building_time > total_time:
+            break
+        else:
+            stargate_time += building_time
+            stargate_queue.append(i)
+    return gateway_queue + factory_queue + stargate_queue
