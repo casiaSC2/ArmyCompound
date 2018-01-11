@@ -69,11 +69,11 @@ class Net(nn.Module):
 
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=17, out_channels=36, kernel_size=3, padding=1)
-        self.bn1 = nn.BatchNorm2d(num_features=36)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm2d(num_features=8)
         self.relu1 = nn.ReLU()
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
-        self.conv2 = nn.Conv2d(in_channels=36, out_channels=36, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=8, out_channels=36, kernel_size=3, padding=1)
         self.bn2 = nn.BatchNorm2d(num_features=36)
         self.relu2 = nn.ReLU()
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
@@ -142,7 +142,7 @@ class A2CAgent(base_agent.BaseAgent):
         self.total_reward += obs.reward
 
         if self.building_unit is None:
-            unit_id = self.select_action(obs.observation['screen'])
+            unit_id = self.select_action(np.array([obs.observation['screen'][_UNIT_TYPE]]))
             unit = protoss_units_array[unit_id]
             self.building_unit = unit
             unit_type = obs.observation["screen"][_UNIT_TYPE]
@@ -152,6 +152,8 @@ class A2CAgent(base_agent.BaseAgent):
                 target = [int(unit_x.mean()), int(unit_y.mean())]
                 self.building_selected = True
                 return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
+            else:
+                self.reset()
 
 
         elif self.building_selected:
@@ -160,6 +162,8 @@ class A2CAgent(base_agent.BaseAgent):
             self.building_selected = False
             if building_unit.train_id in obs.observation['available_actions']:
                 return actions.FunctionCall(building_unit.train_id, [_QUEUED])
+            else:
+                self.reset()
         return actions.FunctionCall(_NOOP, [])
 
 
@@ -214,6 +218,7 @@ def finish_episode():
 def main():
     for i_episode in range(150):
         state = env.reset()
+        agent.reset()
         total_reward = 0
         for t in range(10000):  # Don't infinite loop while learning
             action = agent.step(state)
