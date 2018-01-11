@@ -107,6 +107,9 @@ Oracle = Unit('carrier', build_id=PROTOSS_STARGATE, train_id=_TRAIN_ORACLE, unit
 Tempest = Unit('tempest', build_id=PROTOSS_STARGATE, train_id=_TRAIN_TEMPEST, unit_id=PROTOSS_TEMPEST, minerals=300,
                gas=200, time=60)
 
+protoss_units_array = [Zealot, Stalker, Sentry, HighTemplar, DarkTemplar, Adept, Observer, WarpPrism, Immortal, Colossus,
+                       Disruptor, Phoenix, VoidRay, Oracle, Carrier, Tempest]
+
 def get_raw_building_queue(unit_tuple):
     gateway_building_queue = []
     factory_building_queue = []

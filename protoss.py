@@ -12,6 +12,7 @@ from gaft.plugin_interfaces.analysis import OnTheFlyAnalysis
 # Analysis plugin base class.
 from pysc2.agents import base_agent
 from pysc2.env import sc2_env
+
 from pysc2.lib import actions
 from pysc2.lib import features
 from pysc2.maps.lib import Map
