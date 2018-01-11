@@ -69,20 +69,20 @@ class Net(nn.Module):
 
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=17, out_channels=36, kernel_size=3, stride=1)
+        self.conv1 = nn.Conv2d(in_channels=17, out_channels=36, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm2d(num_features=36)
         self.relu1 = nn.ReLU()
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
-        self.conv2 = nn.Conv2d(in_channels=36, out_channels=36, kernel_size=3, stride=1)
+        self.conv2 = nn.Conv2d(in_channels=36, out_channels=36, kernel_size=3, padding=1)
         self.bn2 = nn.BatchNorm2d(num_features=36)
         self.relu2 = nn.ReLU()
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
-        self.conv3 = nn.Conv2d(in_channels=36, out_channels=36, kernel_size=3, stride=1)
+        self.conv3 = nn.Conv2d(in_channels=36, out_channels=36, kernel_size=3, padding=1)
         self.bn3 = nn.BatchNorm2d(num_features=36)
         self.relu3 = nn.ReLU()
         self.maxpool3 = nn.MaxPool2d(kernel_size=2)
 
-        self.affine = nn.Linear(in_features=1296, out_features=128)
+        self.affine = nn.Linear(in_features=2304, out_features=128)
         self.policy = nn.Linear(in_features=128, out_features=16)
         self.value = nn.Linear(in_features=128, out_features=1)
         self.activation = nn.ReLU()
@@ -174,15 +174,15 @@ env = sc2_env.SC2Env(
     visualize=True,
     agent_race='P',
     score_index=0,
-    game_steps_per_episode=500,
-    difficulty=8,
+    game_steps_per_episode=800,
+    difficulty=9,
     step_mul=2,
     # save_replay_episodes=1,
     # replay_dir='/home/wangjian/StarCraftII/Maps'
 )
 
 model = Net()
-optimizer = optim.Adam(model.parameters(), lr=3e-2)
+optimizer = optim.Adam(model.parameters(), lr=1e-3)
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 agent = A2CAgent(model)
 agent.setup(env.action_spec(), env.observation_spec())
@@ -212,19 +212,22 @@ def finish_episode():
 
 
 def main():
-    running_reward = 10
-    for i_episode in count(1):
+    for i_episode in range(150):
         state = env.reset()
+        total_reward = 0
         for t in range(10000):  # Don't infinite loop while learning
             action = agent.step(state)
             state = env.step([action])
             model.rewards.append(state[0].reward)
+            total_reward += state[0].reward
             if state[0].last():
                 break
-        final_reward = finish_episode()
+        finish_episode()
         if i_episode % log_interval == 0:
             print('Episode {}\tfinal reward: {:.2f}'.format(
-                i_episode, final_reward))
+                i_episode, total_reward))
+    torch.save(model, 'model.pkl')
+    env.close()
 
 
 if __name__ == '__main__':
