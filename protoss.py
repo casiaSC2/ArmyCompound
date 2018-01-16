@@ -20,7 +20,7 @@ from absl import flags
 from run_loop import run
 import sys
 import random
-import protoss_units
+from lib import protoss_units
 
 # Analysis plugin base class.
 

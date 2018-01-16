@@ -1,6 +1,4 @@
-from itertools import count
 from collections import namedtuple
-import argparse
 import numpy as np
 import torch
 import torch.nn as nn
@@ -13,7 +11,7 @@ from pysc2.lib import features
 from pysc2.maps.lib import Map
 from torch.autograd import Variable
 from torch.distributions import Categorical
-from protoss_units import protoss_units_array
+from lib.protoss_units import protoss_units_array
 from absl import flags
 import sys
 
@@ -93,12 +91,13 @@ class Net(nn.Module):
 
 class A2CAgent(base_agent.BaseAgent):
 
-    def __init__(self, net):
+    def __init__(self, net, feature):
         super(A2CAgent, self).__init__()
         self.model = net
         self.building_unit = None
         self.building_selected = False
         self.total_reward = 0
+        self.feature = feature
 
     def setup(self, obs_spec, action_spec):
         '''
@@ -126,6 +125,12 @@ class A2CAgent(base_agent.BaseAgent):
         action = m.sample()
         self.model.saved_actions.append(SavedAction(m.log_prob(action), state_value))
         return action.data[0]
+
+    def get_image_feature(self, obs):
+        if self.feature == 'image':
+            return np.array([obs.observation['screen'][_UNIT_TYPE]])
+        elif self.feature == 'linear':
+            pass
 
     def step(self, obs):
         '''
@@ -188,7 +193,7 @@ env = sc2_env.SC2Env(
 model = Net()
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
-agent = A2CAgent(model)
+agent = A2CAgent(model, feature='image')
 agent.setup(env.action_spec(), env.observation_spec())
 
 
