@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torch.autograd.variable import Variable
 
+
+
 class FCNet(nn.Module):
 
     def __init__(self, in_features, out_features=16):
@@ -22,8 +24,6 @@ class FCNet(nn.Module):
         self.policy = nn.Linear(in_features=256, out_features=out_features)
         self.value = nn.Linear(in_features=256, out_features=1)
         self.softmax = nn.Softmax()
-
-
 
     def forward(self, x):
         x = self.net(x)
