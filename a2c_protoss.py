@@ -86,7 +86,7 @@ class Net(nn.Module):
         self.policy = nn.Linear(in_features=128, out_features=16)
         self.value = nn.Linear(in_features=128, out_features=1)
         self.activation = nn.ReLU()
-        self.softmax = nn.Softmax(dim=1)
+        self.softmax = nn.Softmax()
         self.saved_actions = []
         self.rewards = []
 
@@ -171,7 +171,7 @@ FLAGS = flags.FLAGS
 FLAGS(sys.argv)
 
 train_map = Map()
-train_map.directory = '/home/wangjian/StarCraftII/Maps'
+train_map.directory = '/home/biug/PycharmProjects/ArmyCompound/Maps'
 train_map.filename = 'DRLTrain'
 env = sc2_env.SC2Env(
     map_name=train_map,
