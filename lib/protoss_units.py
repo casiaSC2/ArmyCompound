@@ -1,6 +1,7 @@
 from pysc2.lib import actions
 import random
 
+
 class Unit:
     def __init__(self, name, build_id, train_id, unit_id, minerals, gas, time):
         self.name = name
@@ -10,6 +11,9 @@ class Unit:
         self.minerals = minerals
         self.gas = gas
         self.time = time
+
+    def __str__(self):
+        return self.name
 
 
 # Unit IDs
@@ -75,15 +79,18 @@ _TRAIN_CARRIER = actions.FUNCTIONS.Train_Carrier_quick.id
 _TRAIN_ORACLE = actions.FUNCTIONS.Train_Oracle_quick.id
 _TRAIN_TEMPEST = actions.FUNCTIONS.Train_Tempest_quick.id
 
-Zealot = Unit('zealot', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_ZEALOT, unit_id=PROTOSS_ZEALOT, minerals=100, gas=0, time=38)
+Zealot = Unit('zealot', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_ZEALOT, unit_id=PROTOSS_ZEALOT, minerals=100, gas=0,
+              time=38)
 Stalker = Unit('stalker', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_STALKER, unit_id=PROTOSS_STALKER, minerals=125,
                gas=50, time=42)
-Sentry = Unit('sentry', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_SENTRY, unit_id=PROTOSS_SENTRY, minerals=50, gas=100, time=37)
+Sentry = Unit('sentry', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_SENTRY, unit_id=PROTOSS_SENTRY, minerals=50, gas=100,
+              time=37)
 HighTemplar = Unit('highTemplar', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_HIGHTEMPLAR, unit_id=PROTOSS_HIGHTEMPLAR,
                    minerals=50, gas=150, time=55)
 DarkTemplar = Unit('darkTemplar', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_DARKTEMPLAR, unit_id=PROTOSS_DARKTEMPLAR,
                    minerals=125, gas=125, time=55)
-Adept = Unit('adept', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_ADEPT, unit_id=PROTOSS_ADEPT, minerals=100, gas=25, time=38)
+Adept = Unit('adept', build_id=PROTOSS_GATEWAY, train_id=_TRAIN_ADEPT, unit_id=PROTOSS_ADEPT, minerals=100, gas=25,
+             time=38)
 
 Observer = Unit('observer', build_id=PROTOSS_ROBOTICSFACILITY, train_id=_TRAIN_OBSERVER, unit_id=PROTOSS_OBSERVER,
                 minerals=25, gas=75, time=30)
@@ -107,8 +114,10 @@ Oracle = Unit('carrier', build_id=PROTOSS_STARGATE, train_id=_TRAIN_ORACLE, unit
 Tempest = Unit('tempest', build_id=PROTOSS_STARGATE, train_id=_TRAIN_TEMPEST, unit_id=PROTOSS_TEMPEST, minerals=300,
                gas=200, time=60)
 
-protoss_units_array = [Zealot, Stalker, Sentry, HighTemplar, DarkTemplar, Adept, Observer, WarpPrism, Immortal, Colossus,
+protoss_units_array = [Zealot, Stalker, Sentry, HighTemplar, DarkTemplar, Adept, Observer, WarpPrism, Immortal,
+                       Colossus,
                        Disruptor, Phoenix, VoidRay, Oracle, Carrier, Tempest]
+
 
 def get_raw_building_queue(unit_tuple):
     gateway_building_queue = []
@@ -130,7 +139,6 @@ def get_raw_building_queue(unit_tuple):
         gateway_building_queue.append(DarkTemplar)
     for i in range(0, int(adept_num)):
         gateway_building_queue.append(Adept)
-
 
     for i in range(0, int(observer_num)):
         factory_building_queue.append(Observer)
@@ -157,7 +165,7 @@ def get_raw_building_queue(unit_tuple):
     return gateway_building_queue + factory_building_queue + stargate_building_queue
 
 
-def get_building_queue(unit_tuple, total_time = 900, gateway_count = 8, factory_count = 2, stargate_count = 1):
+def get_building_queue(unit_tuple, total_time=900, gateway_count=8, factory_count=2, stargate_count=1):
     gateway_building_queue = []
     factory_building_queue = []
     stargate_building_queue = []
@@ -208,7 +216,6 @@ def get_building_queue(unit_tuple, total_time = 900, gateway_count = 8, factory_
         else:
             factory_time += building_time
             factory_queue.append(i)
-
 
     for i in range(0, int(phoenix_num)):
         stargate_building_queue.append(Phoenix)

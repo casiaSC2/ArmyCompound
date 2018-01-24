@@ -14,7 +14,8 @@ from torch.distributions import Categorical
 from lib.protoss_units import protoss_units_array
 from absl import flags
 import sys
-
+from tensorboard_logger import configure, log_value
+configure('runs/run')
 gamma = 0.99
 log_interval = 1
 
@@ -25,20 +26,10 @@ _RALLY_UNITS_MINIMAP = actions.FUNCTIONS.Rally_Units_minimap.id
 _SELECT_ARMY = actions.FUNCTIONS.select_army.id
 _ATTACK_MINIMAP = actions.FUNCTIONS.Attack_minimap.id
 
-_TRAIN_ZEALOT = actions.FUNCTIONS.Train_Zealot_quick.id
-_TRAIN_STALKER = actions.FUNCTIONS.Train_Stalker_quick.id
-_TRAIN_DARK = actions.FUNCTIONS.Train_DarkTemplar_quick.id
-_TRAIN_IMMORTAL = actions.FUNCTIONS.Train_Immortal_quick.id
-_TRAIN_COLOSSUS = actions.FUNCTIONS.Train_Colossus_quick.id
-
 # Features
 _PLAYER_RELATIVE = features.SCREEN_FEATURES.player_relative.index
 _UNIT_TYPE = features.SCREEN_FEATURES.unit_type.index
 
-# Unit IDs
-_PROTOSS_GATEWAY = 62
-_PROTOSS_ROBOTICSFACILITY = 71
-_PROTOSS_STARGATE = 67
 # Parameters
 _PLAYER_SELF = 1
 _SUPPLY_USED = 3
@@ -98,6 +89,7 @@ class A2CAgent(base_agent.BaseAgent):
         self.building_selected = False
         self.total_reward = 0
         self.feature = feature
+        self.army = []
 
     def setup(self, obs_spec, action_spec):
         '''
@@ -166,6 +158,7 @@ class A2CAgent(base_agent.BaseAgent):
             self.building_unit = None
             self.building_selected = False
             if building_unit.train_id in obs.observation['available_actions']:
+                self.army.append(building_unit)
                 return actions.FunctionCall(building_unit.train_id, [_QUEUED])
             else:
                 self.reset()
@@ -176,14 +169,15 @@ FLAGS = flags.FLAGS
 FLAGS(sys.argv)
 
 train_map = Map()
-train_map.directory = '/home/biug/PycharmProjects/ArmyCompound/Maps'
+train_map.directory = '/home/wangjian/StarCraftII/Maps'
 train_map.filename = 'DRLTrain'
 env = sc2_env.SC2Env(
     map_name=train_map,
-    visualize=True,
+    visualize=False,
     agent_race='P',
-    score_index=0,
-    game_steps_per_episode=800,
+    # score_index=5 是消灭敌方单位的score
+    score_index=5,
+    game_steps_per_episode=600,
     difficulty=9,
     step_mul=2,
     # save_replay_episodes=1,
@@ -191,13 +185,13 @@ env = sc2_env.SC2Env(
 )
 
 model = Net()
-optimizer = optim.Adam(model.parameters(), lr=1e-3)
+optimizer = optim.Adam(model.parameters(), lr=1e-4)
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 agent = A2CAgent(model, feature='image')
 agent.setup(env.action_spec(), env.observation_spec())
 
 
-def finish_episode():
+def finish_episode(episode):
     R = 0
     saved_actions = model.saved_actions
     policy_losses = []
@@ -213,7 +207,11 @@ def finish_episode():
         policy_losses.append(-log_prob * reward)
         value_losses.append(F.smooth_l1_loss(value, Variable(torch.Tensor([r]))))
     optimizer.zero_grad()
-    loss = torch.cat(policy_losses).sum() + torch.cat(value_losses).sum()
+    policy_loss_sum = torch.cat(policy_losses).sum()
+    value_loss_sum = torch.cat(value_losses).sum()
+    loss = policy_loss_sum + value_loss_sum
+    log_value('policy loss', policy_loss_sum.data[0], episode)
+    log_value('value loss', value_loss_sum.data[0], episode)
     loss.backward()
     optimizer.step()
     del model.rewards[:]
@@ -221,7 +219,7 @@ def finish_episode():
 
 
 def main():
-    for i_episode in range(150):
+    for i_episode in range(1000):
         state = env.reset()
         agent.reset()
         total_reward = 0
@@ -232,10 +230,13 @@ def main():
             total_reward += state[0].reward
             if state[0].last():
                 break
-        finish_episode()
+        finish_episode(i_episode)
         if i_episode % log_interval == 0:
             print('Episode {}\tfinal reward: {:.2f}'.format(
                 i_episode, total_reward))
+            print("building army is: {army}".format(army=[str(s) for s in agent.army]))
+            agent.army.clear()
+        log_value('reward', total_reward, i_episode)
     torch.save(model, 'model.pkl')
     env.close()
 
