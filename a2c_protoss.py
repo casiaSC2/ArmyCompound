@@ -15,6 +15,7 @@ from lib.protoss_units import protoss_units_array
 from absl import flags
 import sys
 from tensorboard_logger import configure, log_value
+
 configure('runs/run')
 gamma = 0.99
 log_interval = 1
@@ -90,6 +91,7 @@ class A2CAgent(base_agent.BaseAgent):
         self.total_reward = 0
         self.feature = feature
         self.army = []
+        self.is_save = False
 
     def setup(self, obs_spec, action_spec):
         '''
@@ -109,6 +111,7 @@ class A2CAgent(base_agent.BaseAgent):
         self.building_unit = None
         self.building_selected = None
         self.total_reward = 0
+        self.is_save = False
 
     def select_action(self, state):
         state = torch.from_numpy(state).float().unsqueeze(0)
@@ -144,7 +147,7 @@ class A2CAgent(base_agent.BaseAgent):
             self.building_unit = unit
             unit_type = obs.observation["screen"][_UNIT_TYPE]
             unit_y, unit_x = (unit_type == unit.build_id).nonzero()
-
+            self.is_save = True
             if unit_y.any():
                 target = [int(unit_x.mean()), int(unit_y.mean())]
                 self.building_selected = True
@@ -157,6 +160,7 @@ class A2CAgent(base_agent.BaseAgent):
             building_unit = self.building_unit
             self.building_unit = None
             self.building_selected = False
+            self.is_save = False
             if building_unit.train_id in obs.observation['available_actions']:
                 self.army.append(building_unit)
                 return actions.FunctionCall(building_unit.train_id, [_QUEUED])
@@ -226,8 +230,9 @@ def main():
         for t in range(10000):  # Don't infinite loop while learning
             action = agent.step(state)
             state = env.step([action])
-            model.rewards.append(state[0].reward)
-            total_reward += state[0].reward
+            if agent.is_save:
+                model.rewards.append(state[0].reward)
+                total_reward += state[0].reward
             if state[0].last():
                 break
         finish_episode(i_episode)
